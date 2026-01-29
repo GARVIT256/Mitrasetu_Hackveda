@@ -1,0 +1,9 @@
+{
+  "dependencies": {
+    "@huggingface/inference": "^4.7.1",
+    "react-apple-emojis": "^3.0.0",
+    "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1",
+    "twemoji": "^14.0.2"
+  }
+}
