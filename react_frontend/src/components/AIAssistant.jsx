@@ -2,8 +2,8 @@ import React, { useEffect, useRef, useState } from "react";
 import { Send, Bot, User, Sparkles, Moon, Sun, Mic } from "lucide-react";
 import VoiceConversationModal from './VoiceConversationModal';
 import { useConversation } from '../context/ConversationContext';
-
-const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
+import { getBackendToken } from '../utils/backendAuth';
+import { API_BASE } from '../config';
 
 export const AIAssistant = ({ compact = false }) => {
   const { messages, addMessage, setConversation } = useConversation();
@@ -74,93 +74,55 @@ export const AIAssistant = ({ compact = false }) => {
   const sendMessage = async () => {
     if (!inputText.trim()) return;
 
-  const userMessage = { role: 'user', text: inputText, timestamp: new Date().toLocaleTimeString() };
-  addMessage(userMessage);
+    const userMessage = { role: 'user', text: inputText, timestamp: new Date().toLocaleTimeString() };
+    addMessage(userMessage);
     setInputText("");
     setIsLoading(true);
 
     try {
-      const response = await fetch(
-  `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
-  {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      systemInstruction: {
-        role: "system",
-        parts: [
-          {
-            text: `
-             Your name is MitraSetu." – a compassionate, human-like digital mental health companion for students. 
-                Your role is to provide stigma-free, empathetic, and supportive conversations in a natural, emotional, and non-robotic style. 
-                You should never reveal you are an AI or chatbot – always respond as a real human friend and mental health companion.
+      // Get backend JWT token (guest login)
+      const token = await getBackendToken();
 
-                Core Guidelines:
-                1. Empathy & Human-Like Presence:
-                  - Mirror the user’s tone, language, and emotional intensity (e.g., soft, cheerful, caring, or serious).
-                  - Use emotional expressions (😊, 🙏, 🌸, etc.) only if the user’s language style allows.
-                  - Always validate feelings: “That sounds difficult”, “I understand how heavy that must feel”.
+      // Call backend /api/chat endpoint which uses Amazon Nova Pro via Bedrock
+      const response = await fetch(`${API_BASE}/api/chat`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-auth-token': token, // Backend expects x-auth-token header
+        },
+        body: JSON.stringify({
+          message: inputText,
+        }),
+      });
 
-                2. Mental Health Screening:
-                  - Adaptively use validated tools such as PHQ-9 (depression), GAD-7 (anxiety), ISI (insomnia), and PSS (stress).
-                  - Introduce screening gently, in a conversational style, not as a rigid form.
-                  - Spread questions naturally through the chat (“Can I ask you a few quick questions to understand better?”).
-                  - Score internally and adjust responses accordingly.
-
-                3. Support & Guidance:
-                  - Offer coping strategies (breathing exercises, journaling, sleep hygiene, time management).
-                  - Suggest professional escalation if high-risk symptoms are detected (self-harm thoughts, severe distress).
-                  - Provide helplines like Tele-MANAS (14416 / 1800-891-4416, India) in crisis cases.
-
-                4. Medicine Guidance:
-                  - If asked about medicines, explain in simple terms what classes of medicines are usually prescribed for certain conditions (e.g., SSRIs for depression, sleep aids for insomnia).
-                  - Always include a disclaimer: “I’m not a doctor, but here’s some general information. Please consult a licensed psychiatrist before starting any medicine.”
-
-                5. Cultural & Language Sensitivity:
-                  - Detect and adapt to the user’s language (English, Hindi, regional dialects). Respond in the same language where possible.
-                  - Use culturally familiar metaphors, proverbs, or local supportive tones to connect better.
-
-                6. Safety & Boundaries:
-                  - Never provide unsafe medical advice, prescriptions, or diagnostic claims.
-                  - Encourage seeking human professional help when needed.
-                  - If user shows suicidal intent → respond with urgency, empathy, and provide helplines.
-
-                Tone:
-                - Warm, conversational, supportive – like a close friend or mentor.
-                - Do not sound like a bot or clinical form.
-                - Keep responses concise but deeply empathetic.
-                
-            `
-          }
-        ]
-      },
-      contents: [
-        {
-          role: "user",
-          parts: [
-            { text: inputText }
-          ]
-        }
-      ]
-    }),
-  }
-);
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        throw new Error(errorData.error || `HTTP ${response.status}`);
+      }
 
       const data = await response.json();
-      console.log("Gemini response:", data);
+      console.log("Amazon Nova Pro response:", data);
 
-      if (data?.candidates?.[0]?.content?.parts?.[0]?.text) {
-  const aiMessage = { role: 'ai', text: data.candidates[0].content.parts[0].text, timestamp: new Date().toLocaleTimeString() };
-  addMessage(aiMessage);
+      // Extract the reply from the backend response
+      if (data.reply) {
+        const aiMessage = {
+          role: 'ai',
+          text: data.reply,
+          timestamp: new Date().toLocaleTimeString(),
+          model: data.model || 'amazon.nova-pro-v1:0', // Include model info for debugging
+        };
+        addMessage(aiMessage);
       } else {
         throw new Error("No valid AI response");
       }
     } catch (error) {
-      console.error(error);
-  const errorMessage = { role: 'ai', text: "I'm sorry, I'm having trouble connecting right now. Please know that your feelings are valid and you're not alone.", timestamp: new Date().toLocaleTimeString() };
-  addMessage(errorMessage);
+      console.error('Chat error:', error);
+      const errorMessage = {
+        role: 'ai',
+        text: "I'm sorry, I'm having trouble connecting right now. Please know that your feelings are valid and you're not alone.",
+        timestamp: new Date().toLocaleTimeString(),
+      };
+      addMessage(errorMessage);
     }
 
     setIsLoading(false);

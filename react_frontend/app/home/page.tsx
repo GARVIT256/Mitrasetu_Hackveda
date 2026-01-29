@@ -58,15 +58,6 @@ export default function HomePage() {
           <p className="text-muted-foreground mt-2">Here's your personalized mental wellbeing dashboard</p>
         </div>
 
-        {/* Live with Mitra quick entry */}
-        <div className="flex justify-center">
-          <a
-            href="/live"
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-md bg-emerald-600 text-white hover:bg-emerald-500 transition-colors"
-          >
-            <span>Go Live with Mitra (Mock)</span>
-          </a>
-        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Card>

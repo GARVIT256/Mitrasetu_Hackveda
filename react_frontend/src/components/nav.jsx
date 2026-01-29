@@ -85,7 +85,6 @@ function SidebarHome({ pathname }) {
       <div className="space-y-2">
         <SidebarItem active={pathname === '/home'} collapsed={collapsed} color="bg-[#2B3442]" Icon={HomeIcon} label="Home" to="/home" />
         <SidebarItem asAnchor href="/home#post-tip" collapsed={collapsed} color="bg-[#7C3AED]" Icon={PlusSquare} label="Post Health Tip" />
-        <SidebarItem active={pathname === '/live'} collapsed={collapsed} color="bg-[#16A34A]" Icon={Video} label="Live with Mitra" to="/live" />
         <SidebarItem active={pathname === '/journey'} collapsed={collapsed} color="bg-[#FB923C]" Icon={BookOpen} label="Chat with Mitra" to="/journey" />
         <SidebarItem active={pathname === '/resources'} collapsed={collapsed} color="bg-[#F59E0B]" Icon={Shield} label="Mitra Circle" to="/resources" />
         {/* <SidebarItem active={pathname === '/shop'} collapsed={collapsed} color="bg-[#EF4444]" Icon={ShoppingBag} label="Shop" to="/shop" /> */}
