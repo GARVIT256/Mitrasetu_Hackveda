@@ -2,7 +2,7 @@
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import './App.css'
 import { lazy, Suspense } from 'react'
-const Auth = lazy(() => import('./pages/Auth'))
+import Auth from './pages/auth';
 import Profile from './pages/Profile';
 import LandingPage from './pages/LandingPage'
 import Home from './pages/Home'
